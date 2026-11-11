@@ -357,9 +357,13 @@ function render(){
   $("adMeta").innerHTML=[a.company,a.published_date,a.language,a.youtube_url&&("YouTube: "+(a.youtube_note||"link")),a.source_note].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
   renderConcerns(a);
   const id=ytId(a.youtube_url);
-  $("player").innerHTML = id
-    ? `<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/${id}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`
-    : `<div class="novideo mute">No YouTube copy. Watch it on iSpot ↓</div>`;
+  const player=$("player");
+  if(player.dataset.videoId!==String(id||"")){
+    player.innerHTML = id
+      ? `<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/${id}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`
+      : `<div class="novideo mute">No YouTube copy. Watch it on iSpot ↓</div>`;
+    player.dataset.videoId=id||"";
+  }
   $("adLinks").innerHTML=[a.ispot_url&&`<a href="${esc(a.ispot_url)}" target="_blank" rel="noopener"><button class="${id?"":"primary"}">Watch on iSpot ↗</button></a>`,
     a.youtube_url&&`<a href="${esc(a.youtube_url)}" target="_blank" rel="noopener"><button>YouTube ↗</button></a>`,
     !a.ispot_url&&!a.youtube_url&&a._link&&`<a href="${esc(a._link)}" target="_blank" rel="noopener"><button class="primary">Open ad ↗</button></a>`].filter(Boolean).join("");
