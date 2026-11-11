@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ad Coder</title>
+<style>
+/* ===== Theme: edit these tokens to restyle. Blues approximate (not copy) WWU's palette. ===== */
+:root{
+  --bg:#e9edf3; --card:#ffffff; --ink:#0d1321; --mute:#3a4354; --line:#b9c1cd; --rule:#0d1321;
+  --brand:#0a3f85; --brand-dark:#072c5e; --brand-ink:#ffffff; --sky:#dbe8f7;
+  --ok:#17663a; --bad:#a3221a; --gold:#f2b705; --gold-soft:#fff3c4; --violet:#5a2a96;
+  --serif:Charter,"Bitstream Charter","Sitka Text",Cambria,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0a1020; --card:#111a2e; --ink:#f3f5f9; --mute:#bcc5d3; --line:#3b4763; --rule:#e8ecf2;
+  --brand:#79adff; --brand-dark:#0f2347; --brand-ink:#08101f; --sky:#18294a;
+  --ok:#5fd18f; --bad:#ff8f84; --gold:#f5c542; --gold-soft:#3a2f08; --violet:#c9a6ff;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans)}
+a{color:var(--brand);font-weight:600}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.mute{color:var(--mute);font-size:13px}
+.hidden{display:none!important}
+.row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.spacer{flex:1}
+code{font-size:13px;background:var(--sky);padding:1px 5px;border-radius:2px}
+
+/* header bar */
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 18px;background:var(--brand-dark);color:#fff;border-bottom:4px solid var(--gold);position:sticky;top:0;z-index:5}
+@media (prefers-color-scheme:dark){header{background:#06101f}}
+header h1{font:700 21px/1.1 var(--serif);margin:0 14px 0 0;letter-spacing:.01em;color:#fff}
+header .mute,header label{color:#e3eaf5;font-size:13px}
+header select,header input[type=number]{background:#fff;color:#0d1321;border:2px solid #fff}
+header button{background:transparent;color:#fff;border:2px solid #fff}
+header button:hover{background:rgba(255,255,255,.15)}
+header button.primary{background:#fff;color:#072c5e;border-color:#fff}
+header button.primary:hover{background:var(--gold);border-color:var(--gold);color:#0d1321}
+header a{text-decoration:none}
+
+/* controls */
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--card);border:2px solid var(--ink);border-radius:3px;padding:6px 12px;cursor:pointer;font-weight:600}
+button:hover{background:var(--sky)}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+button.primary:hover{background:var(--brand-dark);border-color:var(--brand-dark);color:#fff}
+select,input[type=text],input[type=number],textarea{background:var(--card);border:2px solid var(--ink);border-radius:3px;padding:5px 8px}
+textarea{width:100%;min-height:64px;resize:vertical}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--brand);border-radius:3px;padding:16px}
+
+main{max-width:1180px;margin:0 auto;padding:18px;display:grid;grid-template-columns:1fr 390px;gap:18px}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+#pos{font:700 12px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.title{font:700 26px/1.2 var(--serif);margin:6px 0 10px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tag{font-size:12px;font-weight:600;border:1.5px solid var(--ink);border-radius:2px;padding:2px 8px;color:var(--ink)}
+.concern{border:2px solid var(--ink);border-left:8px solid var(--bad);border-radius:3px;padding:10px 12px;margin-bottom:12px;background:var(--card)}
+.concern h4{margin:0 0 7px;font:800 12px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase}
+.ctags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}
+.ctag{font-size:12px;font-weight:700;border-radius:2px;padding:3px 9px;letter-spacing:.02em}
+.ctag.wrong{background:var(--bad);color:#fff}
+.ctag.dup{background:var(--brand);color:var(--brand-ink)}
+.ctag.len{background:var(--gold);color:#0d1321}
+.ctag.lang{background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.ctag.user{background:var(--violet);color:#fff}
+@media (prefers-color-scheme:dark){.ctag.wrong,.ctag.user{color:#08101f}}
+.concern ul{margin:0;padding-left:18px;font-size:14px}
+.video{position:relative;padding-top:56.25%;background:#000;border:2px solid var(--ink);border-radius:3px;overflow:hidden;margin-bottom:12px}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.novideo{padding:44px 16px;text-align:center;border:2px dashed var(--ink);border-radius:3px;margin-bottom:12px;font-weight:600}
+.links{display:flex;gap:8px;flex-wrap:wrap}
+.links a{text-decoration:none}
+.vcheck{margin-top:14px;padding-top:14px;border-top:2px solid var(--ink)}
+.vcheck.urgent{border:2px solid var(--bad);border-left:8px solid var(--bad);border-radius:3px;padding:12px;background:var(--card)}
+.dim{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.dim:last-of-type{border-bottom:0}
+.dim h3{font:700 17px/1.25 var(--serif);margin:0 0 2px}
+.dim .help{font-size:13px;color:var(--mute);margin-bottom:8px}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts button{padding:6px 11px;font-size:14px;min-width:38px}
+.opts button.sel{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);box-shadow:0 0 0 2px var(--gold)}
+.nav{display:flex;gap:8px;align-items:center;margin-top:12px}
+.bar{height:12px;background:var(--card);border:2px solid var(--ink);border-radius:2px;overflow:hidden;margin-top:16px}
+.bar div{height:100%;background:var(--brand)}
+#progTxt{font-weight:600;color:var(--ink)}
+.status{font-size:14px;font-weight:700;margin-left:auto}
+.status.done{color:var(--ok)}
+#setup{max-width:580px;margin:60px auto}
+#setup h2{font:700 28px/1.2 var(--serif);margin:0 0 10px}
+#setup p{margin:9px 0}
+.step{border:2px solid var(--ink);border-radius:3px;padding:10px 12px;margin:10px 0}
+.step b{font:700 16px/1.3 var(--serif)}
+dialog{border:2px solid var(--ink);border-top:6px solid var(--brand);border-radius:3px;background:var(--card);color:var(--ink);max-width:520px}
+dialog h3{font:700 20px/1.2 var(--serif)}
+dialog hr{border:0;border-top:1px solid var(--line)}
+dialog::backdrop{background:rgba(5,10,20,.6)}
+</style>
+</head>
+<body>
+
+<div id="setup" class="card">
+  <h2 style="margin-top:0" id="setupTitle">Ad Coder</h2>
+  <p class="row"><label>Your name <input id="coderName" type="text" placeholder="e.g. Alex"></label></p>
+  <p class="mute" style="margin-top:-4px">Use the same name every time. It tags all of your codes.</p>
+  <div class="step"><b>1. Study settings file</b> <span class="mute">(.json, from your study lead)</span>
+    <div class="row"><input id="cfgIn" type="file" accept=".json,.txt,application/json"></div>
+    <div id="cfgStatus" class="mute">Loading…</div></div>
+  <div class="step"><b>2. Ad list</b> <span class="mute">(.csv)</span>
+    <div class="row"><input id="fileIn" type="file" accept=".csv"></div>
+    <div id="dataStatus" class="mute">Loading…</div></div>
+  <p class="mute">Both files are remembered in this browser, so you only pick them again when you get a new version.</p>
+  <p><button id="startBtn" class="primary" disabled>Start coding</button></p>
+  <p class="mute">Your codes save automatically in this browser and never change the ad list. Use <b>Export codes</b> to get your results file, and <b>Backup</b> to move to another computer. To compare two coders, use the <a href="compare.html">compare page</a>. To add ads, use the <a href="ads-manager.html">ad list page</a>.</p>
+</div>
+
+<div id="app" class="hidden">
+<header>
+  <h1 id="appTitle">Ad Coder</h1>
+  <span class="mute" id="who"></span>
+  <select id="coFilter" title="Company"></select>
+  <select id="setSel" title="Which ads">
+    <option value="all">All ads</option>
+    <option value="pilot">Pilot set</option>
+  </select>
+  <span id="pilotCtl" class="hidden mute" title="Set in the study settings file (pilot)"></span>
+  <label class="mute"><input type="checkbox" id="uncodedOnly"> uncoded only</label>
+  <label class="mute"><input type="checkbox" id="flaggedOnly"> flagged only</label>
+  <span class="spacer"></span>
+  <a href="compare.html" target="_blank"><button>Compare coders</button></a>
+  <button id="exportBtn" class="primary">Export codes</button>
+  <button id="moreBtn">Backup / Restore</button>
+</header>
+<main>
+  <section class="card">
+    <div class="mute" id="pos"></div>
+    <div class="title" id="adTitle"></div>
+    <div class="meta" id="adMeta"></div>
+    <div id="concernBox" class="concern hidden"></div>
+    <div id="player"></div>
+    <div class="links" id="adLinks"></div>
+    <div id="vcheck" class="vcheck"></div>
+    <div class="bar"><div id="prog"></div></div>
+    <div class="mute" id="progTxt" style="margin-top:4px"></div>
+  </section>
+  <section class="card">
+    <div id="dims"></div>
+    <div class="dim"><h3>Notes / possible new dimensions</h3>
+      <div class="help">Ideas about the ad's content that the scales don't capture.</div>
+      <textarea id="notes" placeholder="e.g. heavy use of humor, celebrity cameo…"></textarea></div>
+    <div class="dim"><h3>Concerns about this ad</h3>
+      <div class="help">Problems with the data: broken link, wrong ad, duplicate, doesn't belong in the sample, etc.</div>
+      <textarea id="concernNotes" placeholder="e.g. iSpot page won't play; doesn't seem to fit the sample…"></textarea></div>
+    <div class="nav">
+      <button id="prevBtn">← Prev</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <select id="jump" style="max-width:130px" title="Jump to ad (✓ coded, ⚠ flagged)"></select>
+      <span class="status" id="status"></span>
+    </div>
+    <p class="mute" style="margin-bottom:0">Keys: ← / → to move. In the jump list, ✓ = coded, ⚠ = has a concern.</p>
+  </section>
+</main>
+</div>
+
+<dialog id="dlg">
+  <h3 style="margin-top:0">Backup / Restore</h3>
+  <p class="mute">Backup saves everything you've coded to a file. Restore loads it on another computer or browser.</p>
+  <div class="row"><button id="backupBtn">Download backup</button>
+    <button type="button" onclick="document.getElementById('restoreIn').click()">Restore backup…</button>
+    <input id="restoreIn" type="file" accept=".json" class="hidden"></div>
+  <hr style="border:0;border-top:1px solid var(--line)">
+  <div class="row"><button id="renameBtn">Change coder name</button><button id="reloadBtn">Load new settings or ad list</button></div>
+  <div class="row"><a href="ads-manager.html"><button type="button">Add or edit ads</button></a></div>
+  <div class="row"><button id="copyPilotBtn">Copy pilot list</button><span class="mute" id="copyMsg">For locking the pilot in the settings file</span></div>
+  <p class="mute" id="cfgInfo"></p>
+  <div class="row" style="justify-content:flex-end"><button onclick="document.getElementById('dlg').close()">Close</button></div>
+</dialog>
+
+<script>
+/* ---------- study settings file (private; loaded by the coder, never stored in the repo) ---------- */
+function parseLoose(text){
+  // Allows // and /* */ notes and a trailing comma before ] or }, then reads it as JSON.
+  let out="", i=0, inStr=false;
+  text=text.replace(/^﻿/,"");
+  while(i<text.length){ const c=text[i], n=text[i+1];
+    if(inStr){ out+=c; if(c==="\\"){ out+=n||""; i+=2; continue; } if(c==='"') inStr=false; i++; continue; }
+    if(c==='"'){ inStr=true; out+=c; i++; continue; }
+    if(c==="/"&&n==="/"){ while(i<text.length&&text[i]!=="\n") { out+=" "; i++; } continue; }
+    if(c==="/"&&n==="*"){ out+="  "; i+=2; while(i<text.length&&!(text[i]==="*"&&text[i+1]==="/")){ out+=text[i]==="\n"?"\n":" "; i++; } out+="  "; i+=2; continue; }
+    out+=c; i++; }
+  out=out.replace(/,(\s*[\]}])/g," $1");
+  try { return JSON.parse(out); }
+  catch(e){ const m=String(e.message).match(/position (\d+)/); let where="";
+    if(m){ const line=out.slice(0,+m[1]).split("\n").length; where=` near line ${line}`; }
+    throw new Error(`The settings file has a typo${where}. Check for a missing comma, quote or bracket.`); }
+}
+function validateConfig(c){
+  const errs=[];
+  if(!c||typeof c!=="object") return ["The settings file is empty."];
+  if(!Array.isArray(c.dimensions)||!c.dimensions.length) errs.push('"dimensions" must be a list with at least one dimension.');
+  const keys=new Set();
+  (c.dimensions||[]).forEach((d,n)=>{ const at=`Dimension ${n+1}${d&&d.label?` ("${d.label}")`:""}`;
+    if(!d||!d.key||!/^[A-Za-z0-9_]+$/.test(d.key)) errs.push(`${at}: "key" is missing or has spaces/symbols.`);
+    else if(keys.has(d.key)) errs.push(`${at}: key "${d.key}" is used twice.`); else keys.add(d.key);
+    if(!d||!d.label) errs.push(`${at}: "label" is missing.`);
+    if(!d||!Array.isArray(d.options)||d.options.length<2) errs.push(`${at}: needs at least 2 "options".`);
+    if(d&&d.ordinal&&(!Array.isArray(d.ordinal)||d.ordinal.some(o=>!(d.options||[]).includes(o)))) errs.push(`${at}: every "ordinal" value must also be in "options".`);
+  });
+  const v=c.video_check;
+  if(v&&(!v.key||!Array.isArray(v.options))) errs.push('"video_check" needs a "key" and "options".');
+  if(v&&keys.has(v.key)) errs.push(`"video_check" key "${v.key}" is also used by a dimension.`);
+  return errs;
+}
+function normalizeConfig(c){
+  return { study_name: c.study_name||"Ad Coder", version: c.version==null?"":String(c.version),
+    dimensions: c.dimensions.map(d=>({...d, options:d.options.map(String), ordinal:d.ordinal?d.ordinal.map(String):undefined})),
+    video_check: c.video_check ? {...c.video_check, options:c.video_check.options.map(String)} : null,
+    pilot: Object.assign({size:20,seed:1,excludeFlagged:true,ids:[]}, c.pilot||{}) };
+}
+function loadConfigText(text){ const c=parseLoose(text), e=validateConfig(c); if(e.length) throw new Error(e.join(" ")); return normalizeConfig(c); }
+
+const $ = id => document.getElementById(id);
+const LS = { get:k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}, set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}} };
+let CFG=null, DIMENSIONS=[], VIDEO_CHECK=null, P={}, REQUIRED=[];   // all dimensions needed to count as "coded"; video check and notes are optional
+let RAW_CSV=null;
+function applyConfig(cfg){
+  CFG=cfg; DIMENSIONS=cfg.dimensions; VIDEO_CHECK=cfg.video_check; P=cfg.pilot; REQUIRED=DIMENSIONS.map(d=>d.key); PILOT_IDS=null;
+  document.title=cfg.study_name; $("setupTitle").textContent=cfg.study_name; $("appTitle").textContent=cfg.study_name;
+  $("cfgStatus").innerHTML=`Loaded <b>${esc(cfg.study_name)}</b>${cfg.version?` · version ${esc(cfg.version)}`:""} · ${DIMENSIONS.length} dimensions.`;
+  $("cfgInfo").textContent=`Settings: ${cfg.study_name}${cfg.version?" v"+cfg.version:""}, ${DIMENSIONS.length} dimensions.`;
+  if(RAW_CSV) setData(parseCSV(RAW_CSV.text),RAW_CSV.label,true);
+  checkReady();
+}
+
+let ADS=[], VIEW=[], i=0, coder=LS.get("adcoder.name")||"", CODES={};
+
+/* ---------- CSV ---------- */
+function parseCSV(text){
+  const rows=[];let row=[],f="",q=false;
+  text=text.replace(/^﻿/,"");
+  for(let k=0;k<text.length;k++){const c=text[k];
+    if(q){ if(c=='"'){ if(text[k+1]=='"'){f+='"';k++} else q=false } else f+=c }
+    else if(c=='"') q=true;
+    else if(c==','){row.push(f);f=""}
+    else if(c=='\n'||c=='\r'){ if(c=='\r'&&text[k+1]=='\n')k++; row.push(f);f=""; if(row.some(x=>x!==""))rows.push(row); row=[] }
+    else f+=c;
+  }
+  row.push(f); if(row.some(x=>x!==""))rows.push(row);
+  const head=rows.shift().map(h=>h.trim().toLowerCase());
+  return rows.map(r=>Object.fromEntries(head.map((h,j)=>[h,(r[j]||"").trim()])));
+}
+const csvCell = v => { v=v==null?"":String(v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v };
+const splitList = (s,sep) => (s||"").split(sep).map(x=>x.trim()).filter(Boolean);
+function normalize(list){
+  return list.map((r,n)=>{
+    const link = r.youtube_url || r.ispot_url || r.url || r.link || Object.values(r).find(v=>/^https?:\/\//.test(v)) || "";
+    return {...r, ad_id: r.ad_id || r.id || ("AD-"+String(n+1).padStart(3,"0")), title: r.title || r.name || link, _link: link,
+      _tags: splitList(r.concern_tags,";"), _details: splitList(r.concern_detail || r.data_flag,"|")};
+  });
+}
+function setData(list, label, keepRaw){
+  ADS=normalize(list); PILOT_IDS=null;
+  const warn=[], cols=list.length?Object.keys(list[0]):[];
+  if(!cols.includes("ad_id")) warn.push("No ad_id column. Ads were numbered by row, so codes will break if rows are added or reordered. Add a fixed ad_id to every row.");
+  else { const blank=list.filter(r=>!r.ad_id).length; if(blank) warn.push(`${blank} row(s) have no ad_id.`); }
+  const seen={}, dup=new Set(); ADS.forEach(a=>{ if(seen[a.ad_id]) dup.add(a.ad_id); seen[a.ad_id]=1; });
+  if(dup.size) warn.push(`Duplicate ad_id: ${[...dup].join(", ")}. Each ad needs its own ID.`);
+  ["company","title","ispot_url"].forEach(c=>{ if(!cols.includes(c)) warn.push(`Missing column: ${c}.`); });
+  if(locked()){ const have=new Set(ADS.map(a=>a.ad_id)), miss=P.ids.filter(id=>!have.has(id)); if(miss.length) warn.push(`Pilot ads not in this file: ${miss.join(", ")}.`); }
+  $("dataStatus").innerHTML = `Loaded ${ADS.length} ads${label?" from "+esc(label):""}.` + warn.map(w=>`<br><b style="color:var(--bad)">⚠ ${esc(w)}</b>`).join("");
+  checkReady();
+}
+function checkReady(){ $("startBtn").disabled = !(CFG && ADS.length && $("coderName").value.trim()); }
+
+/* ---------- storage (codes live here, never in ads.csv) ---------- */
+const key = () => "adcoder.codes."+coder;
+function loadCodes(){ CODES = LS.get(key()) || {}; }
+function saveCodes(){ LS.set(key(), CODES); }
+
+/* ---------- pilot subset (seeded, identical for everyone using same size+seed) ---------- */
+function rng(seed){ return ()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296 } }
+const locked = () => Array.isArray(P.ids) && P.ids.length>0;
+const pilotLabel = () => locked() ? `locked list (${P.ids.length})` : `${P.size}/${P.seed}${P.excludeFlagged?"/no-flagged":""}`;
+let PILOT_IDS=null;
+function pilotIds(){
+  // Proportional by company (largest remainder, at least 1 per company), seeded shuffle within each company.
+  if(PILOT_IDS) return PILOT_IDS;
+  if(locked()){ const have=new Set(ADS.map(a=>a.ad_id)); return PILOT_IDS=new Set(P.ids.filter(id=>have.has(id))); }
+  const n=+P.size||20, r=rng(+P.seed||1);
+  const pool=ADS.filter(a=>!(P.excludeFlagged&&a._tags.length));
+  const groups={}; pool.forEach(a=>(groups[a.company||"(none)"]=groups[a.company||"(none)"]||[]).push(a.ad_id));
+  const cos=Object.keys(groups).sort(), total=pool.length;
+  const quota=cos.map(c=>{const q=n*groups[c].length/total; return {c,k:Math.max(1,Math.floor(q)),rem:q-Math.floor(q)}});
+  let left=n-quota.reduce((s,x)=>s+x.k,0);
+  [...quota].sort((x,y)=>y.rem-x.rem||x.c.localeCompare(y.c)).forEach(x=>{ if(left>0&&x.k<groups[x.c].length){x.k++;left--;} });
+  const out=[];
+  quota.forEach(({c,k})=>{ const ids=groups[c].slice().sort();
+    for(let i=ids.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}
+    out.push(...ids.slice(0,Math.min(k,ids.length))); });
+  return PILOT_IDS=new Set(out);
+}
+
+/* ---------- concerns ---------- */
+const tagClass = t => /wrong video/i.test(t)?"wrong":/duplicate/i.test(t)?"dup":/length|cut/i.test(t)?"len":/language|spanish/i.test(t)?"lang":"lang";
+function userTags(a){
+  const c=CODES[a.ad_id]||{}, t=[];
+  if(VIDEO_CHECK&&/wrong/i.test(c[VIDEO_CHECK.key]||"")) t.push("Marked wrong video by you");
+  if(c.concern_notes&&c.concern_notes.trim()) t.push("Your concern note");
+  return t;
+}
+const hasConcern = a => a._tags.length || userTags(a).length;
+const isWrongFlag = a => a._tags.some(t=>/wrong video/i.test(t));
+
+/* ---------- view ---------- */
+const isDone = id => { const c=CODES[id]; return c && REQUIRED.every(k=>c[k]) };
+const jumpLabel = a => (isDone(a.ad_id)?"✓ ":"")+(hasConcern(a)?"⚠ ":"")+a.ad_id;
+function buildView(keepId){
+  const co=$("coFilter").value, pilot=$("setSel").value==="pilot"?pilotIds():null, unc=$("uncodedOnly").checked, flg=$("flaggedOnly").checked;
+  VIEW=ADS.filter(a=>(co==="all"||a.company===co)&&(!pilot||pilot.has(a.ad_id))&&(!flg||hasConcern(a))&&(!unc||!isDone(a.ad_id)||a.ad_id===keepId));
+  i=Math.max(0,VIEW.findIndex(a=>a.ad_id===keepId));
+  $("jump").innerHTML=VIEW.map((a,n)=>`<option value="${n}">${jumpLabel(a)}</option>`).join("");
+  LS.set("adcoder.view",{co,set:$("setSel").value,unc,flg});
+  render();
+}
+function ytId(u){ const m=u&&u.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/); return m&&m[1]; }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])) }
+const optBtns = (k,opts,cur) => `<div class="opts">${opts.map(o=>`<button data-k="${k}" data-v="${esc(o)}" class="${cur===o?"sel":""}">${esc(o)}</button>`).join("")}</div>`;
+
+function renderConcerns(a){
+  const ut=userTags(a), box=$("concernBox");
+  if(!a._tags.length && !ut.length){ box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  box.innerHTML=`<h4>Concerns</h4>
+    <div class="ctags">${a._tags.map(t=>`<span class="ctag ${tagClass(t)}">${esc(t)}</span>`).join("")}${ut.map(t=>`<span class="ctag user">${esc(t)}</span>`).join("")}</div>
+    ${a._details.length?`<ul>${a._details.map(d=>`<li>${esc(d)}</li>`).join("")}</ul>`:""}`;
+}
+function render(){
+  const done=VIEW.filter(a=>isDone(a.ad_id)).length;
+  $("prog").style.width=(VIEW.length?done/VIEW.length*100:0)+"%";
+  $("progTxt").textContent=`${done} of ${VIEW.length} coded in this view · ${ADS.filter(a=>isDone(a.ad_id)).length} of ${ADS.length} total`;
+  if(!VIEW.length){ $("adTitle").textContent="Nothing to show. Change the filters."; ["adMeta","player","adLinks","dims","pos","vcheck"].forEach(x=>$(x).innerHTML=""); $("concernBox").classList.add("hidden"); return; }
+  const a=VIEW[i], c=CODES[a.ad_id]||{};
+  $("pos").textContent=`${a.ad_id} · ${i+1} / ${VIEW.length}`;
+  $("adTitle").textContent=a.title;
+  $("adMeta").innerHTML=[a.company,a.published_date,a.language,a.youtube_url&&("YouTube: "+(a.youtube_note||"link")),a.source_note].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
+  renderConcerns(a);
+  const id=ytId(a.youtube_url);
+  $("player").innerHTML = id
+    ? `<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/${id}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`
+    : `<div class="novideo mute">No YouTube copy. Watch it on iSpot ↓</div>`;
+  $("adLinks").innerHTML=[a.ispot_url&&`<a href="${esc(a.ispot_url)}" target="_blank" rel="noopener"><button class="${id?"":"primary"}">Watch on iSpot ↗</button></a>`,
+    a.youtube_url&&`<a href="${esc(a.youtube_url)}" target="_blank" rel="noopener"><button>YouTube ↗</button></a>`,
+    !a.ispot_url&&!a.youtube_url&&a._link&&`<a href="${esc(a._link)}" target="_blank" rel="noopener"><button class="primary">Open ad ↗</button></a>`].filter(Boolean).join("");
+  const urgent=VIDEO_CHECK&&isWrongFlag(a)&&!c[VIDEO_CHECK.key];
+  $("vcheck").classList.toggle("hidden",!VIDEO_CHECK);
+  $("vcheck").className="vcheck"+(urgent?" urgent":"")+(VIDEO_CHECK?"":" hidden");
+  if(VIDEO_CHECK) $("vcheck").innerHTML=`<div class="dim" style="margin:0"><h3>${urgent?"⚠ ":""}${esc(VIDEO_CHECK.label)} <span class="mute">(optional${isWrongFlag(a)?", please check this one":""})</span></h3>
+    <div class="help">${esc(VIDEO_CHECK.help)}</div>${optBtns(VIDEO_CHECK.key,VIDEO_CHECK.options,c[VIDEO_CHECK.key])}</div>`;
+  $("dims").innerHTML=DIMENSIONS.map(d=>`<div class="dim"><h3>${esc(d.label)}</h3><div class="help">${esc(d.help||"")}</div>${optBtns(d.key,d.options,c[d.key])}</div>`).join("");
+  $("notes").value=c.notes||"";
+  $("concernNotes").value=c.concern_notes||"";
+  $("jump").value=i;
+  const s=$("status"); s.textContent=isDone(a.ad_id)?"✓ Coded":`${REQUIRED.filter(k=>c[k]).length}/${REQUIRED.length}`; s.className="status"+(isDone(a.ad_id)?" done":"");
+  $("prevBtn").disabled=i===0; $("nextBtn").textContent=i===VIEW.length-1?"Done":"Next →";
+}
+function touch(id){ const c=CODES[id]||(CODES[id]={}); c.coded_at=new Date().toISOString(); return c; }
+function refreshJump(){ const opt=$("jump").options[i]; if(opt) opt.text=jumpLabel(VIEW[i]); }
+function setCode(k,v){
+  const id=VIEW[i].ad_id, c=touch(id);
+  if(c[k]===v) delete c[k]; else c[k]=v;
+  saveCodes(); refreshJump(); render();
+}
+function go(d){ const n=i+d; if(n<0||n>=VIEW.length) return; const keep=VIEW[n].ad_id; if($("uncodedOnly").checked) buildView(keep); else { i=n; render(); } window.scrollTo({top:0}); }
+
+/* ---------- export / backup ---------- */
+function download(name,text,type){ const b=new Blob([text],{type}); const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+const stamp = () => new Date().toISOString().slice(0,10);
+const safeName = () => coder.replace(/\W+/g,"_");
+function exportCSV(){
+  const pilot=pilotIds();
+  const cols=["coder","ad_id","company","title","published_date","concern_tags",...DIMENSIONS.map(d=>d.key),...(VIDEO_CHECK?[VIDEO_CHECK.key]:[]),"notes","concern_notes","coded_at","in_pilot_set","pilot_size_seed","settings_version"];
+  const lines=[cols.join(",")];
+  ADS.forEach(a=>{ const c=CODES[a.ad_id]; if(!c) return;
+    const r={coder,ad_id:a.ad_id,company:a.company,title:a.title,published_date:a.published_date,concern_tags:a.concern_tags,...c,
+      in_pilot_set:pilot.has(a.ad_id)?"yes":"no",pilot_size_seed:pilotLabel(),settings_version:CFG.version};
+    lines.push(cols.map(k=>csvCell(r[k])).join(",")); });
+  if(lines.length===1){ alert("Nothing coded yet."); return; }
+  download(`ad-codes_${safeName()}_${stamp()}.csv`,"﻿"+lines.join("\r\n"),"text/csv");
+}
+$("backupBtn").onclick=()=>download(`ad-coder-backup_${safeName()}_${stamp()}.json`,JSON.stringify({coder,codes:CODES,saved:new Date().toISOString()},null,1),"application/json");
+$("restoreIn").onchange=e=>{ const f=e.target.files[0]; if(!f) return; f.text().then(t=>{ const d=JSON.parse(t);
+  if(!confirm(`Restore ${Object.keys(d.codes||{}).length} coded ads from ${d.coder||"backup"}? Matching ads will be overwritten.`)) return;
+  Object.assign(CODES,d.codes||{}); saveCodes(); buildView(VIEW[i]&&VIEW[i].ad_id); $("dlg").close(); }).catch(()=>alert("That file isn't a valid backup.")); e.target.value=""; };
+$("renameBtn").onclick=()=>{ const n=prompt("Coder name:",coder); if(n&&n.trim()){ coder=n.trim(); LS.set("adcoder.name",coder); loadCodes(); $("who").textContent="Coder: "+coder; buildView(); $("dlg").close(); } };
+$("copyPilotBtn").onclick=()=>{ const t=JSON.stringify([...pilotIds()]); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>$("copyMsg").textContent="Copied. Paste it as \"ids\" under \"pilot\" in the settings file.",()=>prompt("Copy this list:",t)); };
+$("reloadBtn").onclick=()=>{ $("dlg").close(); $("app").classList.add("hidden"); $("setup").classList.remove("hidden"); };
+
+/* ---------- wiring ---------- */
+document.addEventListener("click",e=>{ const b=e.target.closest("button[data-k]"); if(b&&VIEW[i]) setCode(b.dataset.k,b.dataset.v); });
+function bindText(el,field,rerender){ el.oninput=e=>{ const id=VIEW[i]&&VIEW[i].ad_id; if(!id) return; touch(id)[field]=e.target.value; saveCodes(); refreshJump(); if(rerender) renderConcerns(VIEW[i]); }; }
+bindText($("notes"),"notes"); bindText($("concernNotes"),"concern_notes",true);
+$("prevBtn").onclick=()=>go(-1); $("nextBtn").onclick=()=>go(1);
+$("jump").onchange=e=>{ i=+e.target.value; render(); };
+["coFilter","uncodedOnly","flaggedOnly"].forEach(x=>$(x).onchange=()=>buildView(VIEW[i]&&VIEW[i].ad_id));
+$("setSel").onchange=()=>{ $("pilotCtl").classList.toggle("hidden",$("setSel").value!=="pilot"); buildView(); };
+$("exportBtn").onclick=exportCSV; $("moreBtn").onclick=()=>$("dlg").showModal();
+document.addEventListener("keydown",e=>{ if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||$("app").classList.contains("hidden")) return;
+  if(e.key==="ArrowRight") go(1); if(e.key==="ArrowLeft") go(-1); });
+
+$("coderName").value=coder; $("coderName").oninput=checkReady;
+$("fileIn").onchange=e=>{ const f=e.target.files[0]; if(f) f.text().then(t=>{ RAW_CSV={text:t,label:f.name}; LS.set("adcoder.csv",t); setData(parseCSV(t),f.name); }); };
+$("cfgIn").onchange=e=>{ const f=e.target.files[0]; if(!f) return; f.text().then(t=>{
+  try{ const cfg=loadConfigText(t); LS.set("adcoder.config",t); applyConfig(cfg); }
+  catch(err){ $("cfgStatus").innerHTML=`<b style="color:var(--bad)">⚠ ${esc(err.message)}</b>`; } }); e.target.value=""; };
+$("startBtn").onclick=()=>{
+  coder=$("coderName").value.trim(); LS.set("adcoder.name",coder); loadCodes();
+  $("who").textContent="Coder: "+coder;
+  const cos=[...new Set(ADS.map(a=>a.company).filter(Boolean))];
+  $("coFilter").innerHTML=`<option value="all">All companies</option>`+cos.map(c=>`<option>${esc(c)}</option>`).join("");
+  const v=LS.get("adcoder.view"); if(v){ $("coFilter").value=cos.includes(v.co)?v.co:"all"; $("setSel").value=v.set||"all"; $("uncodedOnly").checked=!!v.unc; $("flaggedOnly").checked=!!v.flg; }
+  $("pilotCtl").textContent= locked() ? `${pilotIds().size} ads · locked list` : `${pilotIds().size} ads · seed ${P.seed}${P.excludeFlagged?" · no flagged ads":""} · not locked`;
+  $("pilotCtl").classList.toggle("hidden",$("setSel").value!=="pilot");
+  $("setup").classList.add("hidden"); $("app").classList.remove("hidden");
+  buildView(); const first=VIEW.findIndex(a=>!isDone(a.ad_id)); if(first>0){ i=first; render(); }
+};
+
+/* Startup: use files published next to this page if they exist; otherwise the copies saved in this browser. */
+function fetchText(name){ return fetch(name+"?v="+Date.now(),{cache:"no-store"}).then(r=>{ if(!r.ok) throw 0; return r.text(); }); }
+fetchText("study_config.json").then(t=>({t,label:"this site"})).catch(()=>{ const t=LS.get("adcoder.config"); return t?{t,label:"saved"}:null; })
+  .then(x=>{ if(!x){ $("cfgStatus").textContent="Choose the study settings file."; return; }
+    try{ applyConfig(loadConfigText(x.t)); if(x.label==="this site") LS.set("adcoder.config",x.t); }
+    catch(err){ $("cfgStatus").innerHTML=`<b style="color:var(--bad)">⚠ ${esc(err.message)}</b>`; } })
+  .then(()=>fetchText("ads.csv").then(t=>({t,label:"ads.csv on this site"})).catch(()=>{ const t=LS.get("adcoder.csv"); return t?{t,label:"your saved copy"}:null; }))
+  .then(x=>{ if(!x){ $("dataStatus").textContent="Choose the ad list CSV."; return; } RAW_CSV={text:x.t,label:x.label}; setData(parseCSV(x.t),x.label); });
+</script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ad List</title>
+<style>
+/* ===== Theme: edit these tokens to restyle. Blues approximate (not copy) WWU's palette. ===== */
+:root{
+  --bg:#e9edf3; --card:#ffffff; --ink:#0d1321; --mute:#3a4354; --line:#b9c1cd; --rule:#0d1321;
+  --brand:#0a3f85; --brand-dark:#072c5e; --brand-ink:#ffffff; --sky:#dbe8f7;
+  --ok:#17663a; --bad:#a3221a; --gold:#f2b705; --gold-soft:#fff3c4; --violet:#5a2a96;
+  --serif:Charter,"Bitstream Charter","Sitka Text",Cambria,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0a1020; --card:#111a2e; --ink:#f3f5f9; --mute:#bcc5d3; --line:#3b4763; --rule:#e8ecf2;
+  --brand:#79adff; --brand-dark:#0f2347; --brand-ink:#08101f; --sky:#18294a;
+  --ok:#5fd18f; --bad:#ff8f84; --gold:#f5c542; --gold-soft:#3a2f08; --violet:#c9a6ff;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans)}
+a{color:var(--brand);font-weight:600}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.mute{color:var(--mute);font-size:13px}
+.hidden{display:none!important}
+.row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.spacer{flex:1}
+code{font-size:13px;background:var(--sky);padding:1px 5px;border-radius:2px}
+
+/* header bar */
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 18px;background:var(--brand-dark);color:#fff;border-bottom:4px solid var(--gold);position:sticky;top:0;z-index:5}
+@media (prefers-color-scheme:dark){header{background:#06101f}}
+header h1{font:700 21px/1.1 var(--serif);margin:0 14px 0 0;letter-spacing:.01em;color:#fff}
+header .mute,header label{color:#e3eaf5;font-size:13px}
+header select,header input[type=number]{background:#fff;color:#0d1321;border:2px solid #fff}
+header button{background:transparent;color:#fff;border:2px solid #fff}
+header button:hover{background:rgba(255,255,255,.15)}
+header button.primary{background:#fff;color:#072c5e;border-color:#fff}
+header button.primary:hover{background:var(--gold);border-color:var(--gold);color:#0d1321}
+header a{text-decoration:none}
+
+/* controls */
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--card);border:2px solid var(--ink);border-radius:3px;padding:6px 12px;cursor:pointer;font-weight:600}
+button:hover{background:var(--sky)}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+button.primary:hover{background:var(--brand-dark);border-color:var(--brand-dark);color:#fff}
+select,input[type=text],input[type=number],input[type=url],input[type=date],textarea{background:var(--card);border:2px solid var(--ink);border-radius:3px;padding:5px 8px}
+textarea{width:100%;min-height:64px;resize:vertical}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--brand);border-radius:3px;padding:16px}
+
+
+.wrap{max-width:1180px;margin:0 auto;padding:18px;display:grid;grid-template-columns:400px 1fr;gap:18px;align-items:start}
+@media (max-width:960px){.wrap{grid-template-columns:1fr}}
+h2{font:700 19px/1.2 var(--serif);margin:0 0 10px}
+.note{background:var(--sky);border:2px solid var(--brand);border-left:10px solid var(--brand);border-radius:3px;padding:12px 14px;margin:0 0 14px;font-size:14px}
+.note p{margin:4px 0}
+.warn{background:var(--gold-soft);border:2px solid var(--gold);border-left:10px solid var(--gold);border-radius:3px;padding:8px 11px;margin:8px 0;font-size:14px;font-weight:600}
+.err{color:var(--bad);font-weight:700;font-size:14px;margin:6px 0}
+.ok{color:var(--ok);font-weight:700;font-size:14px;margin:6px 0}
+label.f{display:block;font-weight:700;font-size:13px;margin:10px 0 3px}
+label.f .mute{font-weight:400}
+.f-in{width:100%}
+.idbox{font:800 24px/1 var(--serif);padding:10px 12px;border:2px solid var(--ink);border-radius:3px;background:var(--sky);display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.idbox span{font:600 12px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chips label{font-size:13px;border:1.5px solid var(--ink);border-radius:2px;padding:2px 8px;cursor:pointer}
+.tbl{overflow:auto;max-height:70vh;border-top:3px solid var(--rule);border-bottom:3px solid var(--rule)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:800 11px/1.2 var(--sans);letter-spacing:.08em;text-transform:uppercase;border-bottom:2px solid var(--rule);position:sticky;top:0;background:var(--card)}
+td:first-child{white-space:nowrap;font-weight:700}
+tr.new td{background:var(--gold-soft)}
+tr.edited td{background:var(--sky)}
+td a{font-weight:600}
+.counts{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.counts span{font-size:12px;font-weight:700;border:1.5px solid var(--ink);border-radius:2px;padding:2px 8px}
+</style>
+</head>
+<body>
+<header><h1>Ad List</h1><span class="mute" id="loadedInfo"></span><span class="spacer"></span>
+  <a href="index.html"><button>← Back to coding</button></a>
+  <button id="saveBtn" class="primary" disabled>Download updated ads.csv</button></header>
+
+<div class="wrap">
+  <section>
+    <div class="note">
+      <p><b>Add or fix ads here, then download the updated <code>ads.csv</code>.</b> New ads get the next ID for their company automatically.</p>
+      <p>Your original file is never changed. Send the new file to your co-coder, who loads it with <b>Backup / Restore → Load new settings or ad list</b>.</p>
+    </div>
+    <div class="card" id="loadCard">
+      <h2>1. Load the current ad list</h2>
+      <input type="file" id="fileIn" accept=".csv">
+      <div class="mute" id="loadStatus">Looking for a saved copy…</div>
+    </div>
+    <div class="card hidden" id="formCard" style="margin-top:16px">
+      <h2 id="formTitle">2. Add an ad</h2>
+      <label class="f">Company</label>
+      <select id="company" class="f-in"></select>
+      <div id="newCo" class="hidden">
+        <label class="f">New company name</label><input id="newCoName" class="f-in" type="text" placeholder="e.g. Meta">
+        <label class="f">ID prefix <span class="mute">(3 letters, used in every ID for this company)</span></label><input id="newCoPrefix" class="f-in" type="text" maxlength="5" placeholder="e.g. MET">
+      </div>
+      <div class="idbox"><b id="nextId">—</b><span id="idLabel">will be assigned</span></div>
+      <label class="f">Title</label><input id="title" class="f-in" type="text" placeholder='e.g. Claude "Problems"'>
+      <label class="f">iSpot link</label><input id="ispot_url" class="f-in" type="url" placeholder="https://www.ispot.tv/ad/…">
+      <label class="f">Date published on iSpot <span class="mute">(optional)</span></label><input id="published_date" class="f-in" type="date">
+      <label class="f">Language</label><input id="language" class="f-in" type="text" value="English">
+      <label class="f">YouTube link <span class="mute">(optional)</span></label><input id="youtube_url" class="f-in" type="url" placeholder="https://www.youtube.com/watch?v=…">
+      <label class="f">YouTube note <span class="mute">(optional)</span></label><input id="youtube_note" class="f-in" type="text" placeholder="e.g. official OpenAI / third-party upload">
+      <label class="f">Concern tags <span class="mute">(optional)</span></label>
+      <div class="chips" id="tagChips"></div>
+      <input id="extraTags" class="f-in" type="text" placeholder="Other tags, separated by ;" style="margin-top:6px">
+      <label class="f">Concern details <span class="mute">(optional; say exactly what the problem is)</span></label><textarea id="concern_detail" class="f-in" rows="2"></textarea>
+      <label class="f">Source note <span class="mute">(optional)</span></label><input id="source_note" class="f-in" type="text">
+      <div id="formMsg"></div>
+      <div class="row" style="margin-top:12px"><button id="addBtn" class="primary">Add ad</button><button id="cancelEdit" class="hidden">Cancel edit</button></div>
+    </div>
+  </section>
+
+  <section class="card hidden" id="listCard">
+    <div class="row" style="margin-top:0"><h2 style="margin:0">All ads</h2><span class="spacer"></span>
+      <select id="fCo"></select><input id="fText" type="text" placeholder="Search title or ID"></div>
+    <div class="counts" id="counts"></div>
+    <div id="changeInfo" class="mute"></div>
+    <div class="tbl"><table id="tbl"></table></div>
+    <p class="mute">Click <b>Edit</b> to fix an ad's details. IDs can't be changed or deleted, because codes are saved by ID.</p>
+  </section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const csvCell=v=>{v=v==null?"":String(v);return/[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+function parseCSV(text){const rows=[];let row=[],f="",q=false;text=text.replace(/^﻿/,"");
+  for(let k=0;k<text.length;k++){const c=text[k];
+    if(q){if(c=='"'){if(text[k+1]=='"'){f+='"';k++}else q=false}else f+=c}
+    else if(c=='"')q=true;else if(c==','){row.push(f);f=""}
+    else if(c=='\n'||c=='\r'){if(c=='\r'&&text[k+1]=='\n')k++;row.push(f);f="";if(row.some(x=>x!==""))rows.push(row);row=[]}else f+=c}
+  row.push(f);if(row.some(x=>x!==""))rows.push(row);
+  const head=(rows.shift()||[]).map(h=>h.trim());return{head,rows:rows.map(r=>Object.fromEntries(head.map((h,j)=>[h,(r[j]||"").trim()])))};}
+
+const STD=["ad_id","company","title","published_date","language","youtube_url","youtube_note","ispot_url","aired_on_tv","concern_tags","concern_detail","source_note"];
+let HEAD=[], ROWS=[], ADDED=new Set(), EDITED=new Set(), EDITING=null, SRC="";
+
+function prefixes(){ // company -> {prefix, max, width}
+  const m={};
+  ROWS.forEach(r=>{ const x=(r.ad_id||"").match(/^([A-Za-z]+)-(\d+)$/); if(!x) return;
+    const c=r.company||"(none)", p=m[c]||(m[c]={prefix:x[1].toUpperCase(),max:0,width:x[2].length});
+    p.max=Math.max(p.max,+x[2]); p.width=Math.max(p.width,x[2].length); });
+  return m;
+}
+function load(text,label){
+  const {head,rows}=parseCSV(text);
+  if(!head.includes("ad_id")||!head.includes("company")){ $("loadStatus").innerHTML=`<div class="err">This file has no ad_id or company column. Is it the ad list?</div>`; return; }
+  HEAD=[...head, ...STD.filter(c=>!head.includes(c))]; ROWS=rows; ADDED=new Set(); EDITED=new Set(); SRC=label;
+  $("loadStatus").innerHTML=`<div class="ok">Loaded ${rows.length} ads from ${esc(label)}.</div><span class="mute">Choose a file above to load a different one.</span>`;
+  $("loadedInfo").textContent=`${rows.length} ads`;
+  $("formCard").classList.remove("hidden"); $("listCard").classList.remove("hidden");
+  buildCompanySelect(); buildTagChips(); renderList(); updateNextId(); dirty();
+}
+function buildCompanySelect(){
+  const cos=Object.keys(prefixes()).sort(), cur=$("company").value;
+  $("company").innerHTML=cos.map(c=>`<option>${esc(c)}</option>`).join("")+`<option value="__new">+ New company…</option>`;
+  if(cos.includes(cur)) $("company").value=cur;
+  $("fCo").innerHTML=`<option value="">All companies</option>`+cos.map(c=>`<option>${esc(c)}</option>`).join("");
+}
+function buildTagChips(){
+  const tags=[...new Set(ROWS.flatMap(r=>(r.concern_tags||"").split(";").map(t=>t.trim()).filter(Boolean)))].sort();
+  $("tagChips").innerHTML=tags.map(t=>`<label><input type="checkbox" value="${esc(t)}"> ${esc(t)}</label>`).join("")||'<span class="mute">No tags yet.</span>';
+}
+function updateNextId(){
+  if(EDITING){ $("nextId").textContent=EDITING; $("idLabel").textContent="editing (ID can't change)"; return; }
+  const isNew=$("company").value==="__new"; $("newCo").classList.toggle("hidden",!isNew);
+  let id="—";
+  if(isNew){ const p=$("newCoPrefix").value.trim().toUpperCase(); if(/^[A-Z]{2,5}$/.test(p)) id=`${p}-001`; }
+  else { const p=prefixes()[$("company").value]; if(p) id=`${p.prefix}-${String(p.max+1).padStart(p.width,"0")}`; }
+  $("nextId").textContent=id; $("idLabel").textContent="will be assigned";
+}
+["company","newCoPrefix","newCoName"].forEach(x=>$(x).addEventListener("input",updateNextId));
+$("company").addEventListener("change",updateNextId);
+
+const FIELDS=["title","ispot_url","published_date","language","youtube_url","youtube_note","concern_detail","source_note"];
+function formTags(){ return [...$("tagChips").querySelectorAll("input:checked")].map(i=>i.value).concat($("extraTags").value.split(";").map(t=>t.trim()).filter(Boolean)); }
+function msg(html,cls){ $("formMsg").innerHTML=html?`<div class="${cls||"err"}">${html}</div>`:""; }
+function resetForm(){ FIELDS.forEach(f=>$(f).value=f==="language"?"English":""); $("extraTags").value=""; $("tagChips").querySelectorAll("input").forEach(i=>i.checked=false);
+  EDITING=null; $("formTitle").textContent="2. Add an ad"; $("addBtn").textContent="Add ad"; $("cancelEdit").classList.add("hidden"); $("company").disabled=false; updateNextId(); }
+
+$("addBtn").onclick=()=>{
+  const v=Object.fromEntries(FIELDS.map(f=>[f,$(f).value.trim()])), tags=[...new Set(formTags())];
+  if(!v.title) return msg("Add a title.");
+  if(!/^https?:\/\/(www\.)?ispot\.tv\//i.test(v.ispot_url)) return msg("Add the iSpot link (it should start with https://www.ispot.tv/).");
+  if(v.youtube_url&&!/youtube\.com\/watch\?v=|youtu\.be\//i.test(v.youtube_url)) return msg("That doesn't look like a YouTube video link.");
+  const norm=u=>u.replace(/^https?:\/\/(www\.)?/i,"").replace(/[?#].*$/,"").replace(/\/$/,"").toLowerCase();
+  const dupI=ROWS.find(r=>r.ad_id!==EDITING&&r.ispot_url&&norm(r.ispot_url)===norm(v.ispot_url));
+  if(dupI) return msg(`This iSpot link is already in the list as <b>${esc(dupI.ad_id)}</b> (${esc(dupI.title)}).`);
+  const ytId=u=>(u.match(/(?:v=|youtu\.be\/)([\w-]{11})/)||[])[1];
+  const dupY=v.youtube_url&&ROWS.find(r=>r.ad_id!==EDITING&&ytId(r.youtube_url||"")&&ytId(r.youtube_url)===ytId(v.youtube_url));
+  const row={...v, concern_tags:tags.join("; ")};
+  if(EDITING){
+    const r=ROWS.find(x=>x.ad_id===EDITING); Object.assign(r,row); if(!ADDED.has(EDITING)) EDITED.add(EDITING);
+    const id=EDITING; resetForm(); msg(`Updated <b>${esc(id)}</b>.`+(dupY?` Note: its YouTube link is also used by ${esc(dupY.ad_id)}.`:""),"ok");
+  } else {
+    let company=$("company").value;
+    if(company==="__new"){ company=$("newCoName").value.trim(); const p=$("newCoPrefix").value.trim().toUpperCase();
+      if(!company) return msg("Add the new company's name.");
+      if(!/^[A-Z]{2,5}$/.test(p)) return msg("The ID prefix should be 2–5 letters, e.g. MET.");
+      if(Object.keys(prefixes()).some(c=>c.toLowerCase()===company.toLowerCase())) return msg("That company already exists. Pick it from the list.");
+      if(Object.values(prefixes()).some(x=>x.prefix===p)) return msg(`The prefix ${p} is already used by another company.`); }
+    const id=$("nextId").textContent; if(!id||id==="—") return msg("Couldn't work out the next ID.");
+    ROWS.push({...Object.fromEntries(HEAD.map(h=>[h,""])),...row,ad_id:id,company,aired_on_tv:"Yes"}); ADDED.add(id);
+    buildCompanySelect(); $("company").value=company; buildTagChips();
+    FIELDS.forEach(f=>$(f).value=f==="language"?"English":""); $("extraTags").value=""; $("newCoName").value=""; $("newCoPrefix").value="";
+    updateNextId(); msg(`Added <b>${esc(id)}</b>.`+(dupY?` <span style="color:var(--bad)">Its YouTube link is also used by ${esc(dupY.ad_id)}. Check it's not a duplicate.</span>`:""),"ok");
+  }
+  renderList(); dirty();
+};
+$("cancelEdit").onclick=()=>{ resetForm(); msg(""); };
+function startEdit(id){
+  const r=ROWS.find(x=>x.ad_id===id); if(!r) return; EDITING=id;
+  FIELDS.forEach(f=>$(f).value=r[f]||""); const tags=(r.concern_tags||"").split(";").map(t=>t.trim()).filter(Boolean);
+  $("tagChips").querySelectorAll("input").forEach(i=>i.checked=tags.includes(i.value)); $("extraTags").value="";
+  $("company").value=r.company; $("company").disabled=true; $("newCo").classList.add("hidden");
+  $("formTitle").textContent=`Edit ${id}`; $("addBtn").textContent="Save changes"; $("cancelEdit").classList.remove("hidden");
+  updateNextId(); msg(""); $("formCard").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function renderList(){
+  $("loadedInfo").textContent=`${ROWS.length} ads`;
+  const co=$("fCo").value, q=$("fText").value.trim().toLowerCase();
+  const list=ROWS.filter(r=>(!co||r.company===co)&&(!q||(r.title+" "+r.ad_id).toLowerCase().includes(q)));
+  const byCo={}; ROWS.forEach(r=>byCo[r.company]=(byCo[r.company]||0)+1);
+  $("counts").innerHTML=Object.entries(byCo).map(([c,n])=>`<span>${esc(c)}: ${n}</span>`).join("")+`<span>Total: ${ROWS.length}</span>`;
+  $("tbl").innerHTML=`<tr><th>ID</th><th>Company</th><th>Title</th><th>Date</th><th>Links</th><th>Concerns</th><th></th></tr>`+
+    list.map(r=>`<tr class="${ADDED.has(r.ad_id)?"new":EDITED.has(r.ad_id)?"edited":""}"><td>${esc(r.ad_id)}</td><td>${esc(r.company)}</td><td>${esc(r.title)}</td><td style="white-space:nowrap">${esc(r.published_date)}</td>
+      <td style="white-space:nowrap">${r.ispot_url?`<a href="${esc(r.ispot_url)}" target="_blank" rel="noopener">iSpot</a>`:""}${r.youtube_url?` · <a href="${esc(r.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`:""}</td>
+      <td class="mute">${esc(r.concern_tags)}</td><td><button data-edit="${esc(r.ad_id)}" style="padding:2px 8px;font-size:12px">Edit</button></td></tr>`).join("");
+}
+$("tbl").onclick=e=>{ const b=e.target.closest("button[data-edit]"); if(b) startEdit(b.dataset.edit); };
+$("fCo").onchange=renderList; $("fText").oninput=renderList;
+function dirty(){ const n=ADDED.size+EDITED.size; $("saveBtn").disabled=!ROWS.length;
+  $("changeInfo").innerHTML=n?`<b>${ADDED.size} added, ${EDITED.size} edited</b> since loading. Highlighted below. Download the updated file to keep them.`:"No changes yet.";
+  window.onbeforeunload=n?()=>"unsaved":null; }
+$("saveBtn").onclick=()=>{
+  const text="﻿"+[HEAD.join(",")].concat(ROWS.map(r=>HEAD.map(h=>csvCell(r[h])).join(","))).join("\r\n");
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:"text/csv"})); a.download="ads.csv"; a.click();
+  try{ localStorage.setItem("adcoder.csv",JSON.stringify(text)); }catch(e){}
+  ADDED.forEach(()=>{}); window.onbeforeunload=null;
+  $("changeInfo").innerHTML=`<span class="ok">Downloaded. The coding page in this browser will use the new list too. Send the file to your co-coder.</span>`;
+};
+$("fileIn").onchange=e=>{ const f=e.target.files[0]; if(f) f.text().then(t=>load(t,f.name)); };
+fetch("ads.csv?v="+Date.now(),{cache:"no-store"}).then(r=>{ if(!r.ok) throw 0; return r.text(); }).then(t=>load(t,"ads.csv on this site"))
+  .catch(()=>{ let t=null; try{ t=JSON.parse(localStorage.getItem("adcoder.csv")); }catch(e){}
+    if(t) load(t,"the copy saved in this browser"); else $("loadStatus").textContent="Choose your ads.csv file."; });
+</script>
+</body>
+</html>

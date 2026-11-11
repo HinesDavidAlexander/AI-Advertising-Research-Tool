@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compare Coders</title>
+<style>
+/* ===== Theme: edit these tokens to restyle. Blues approximate (not copy) WWU's palette. ===== */
+:root{
+  --bg:#e9edf3; --card:#ffffff; --ink:#0d1321; --mute:#3a4354; --line:#b9c1cd; --rule:#0d1321;
+  --brand:#0a3f85; --brand-dark:#072c5e; --brand-ink:#ffffff; --sky:#dbe8f7;
+  --ok:#17663a; --bad:#a3221a; --gold:#f2b705; --gold-soft:#fff3c4; --violet:#5a2a96;
+  --serif:Charter,"Bitstream Charter","Sitka Text",Cambria,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0a1020; --card:#111a2e; --ink:#f3f5f9; --mute:#bcc5d3; --line:#3b4763; --rule:#e8ecf2;
+  --brand:#79adff; --brand-dark:#0f2347; --brand-ink:#08101f; --sky:#18294a;
+  --ok:#5fd18f; --bad:#ff8f84; --gold:#f5c542; --gold-soft:#3a2f08; --violet:#c9a6ff;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans)}
+a{color:var(--brand);font-weight:600}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.mute{color:var(--mute);font-size:13px}
+.hidden{display:none!important}
+.row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.spacer{flex:1}
+code{font-size:13px;background:var(--sky);padding:1px 5px;border-radius:2px}
+
+/* header bar */
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 18px;background:var(--brand-dark);color:#fff;border-bottom:4px solid var(--gold);position:sticky;top:0;z-index:5}
+@media (prefers-color-scheme:dark){header{background:#06101f}}
+header h1{font:700 21px/1.1 var(--serif);margin:0 14px 0 0;letter-spacing:.01em;color:#fff}
+header .mute,header label{color:#e3eaf5;font-size:13px}
+header select,header input[type=number]{background:#fff;color:#0d1321;border:2px solid #fff}
+header button{background:transparent;color:#fff;border:2px solid #fff}
+header button:hover{background:rgba(255,255,255,.15)}
+header button.primary{background:#fff;color:#072c5e;border-color:#fff}
+header button.primary:hover{background:var(--gold);border-color:var(--gold);color:#0d1321}
+header a{text-decoration:none}
+
+/* controls */
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--card);border:2px solid var(--ink);border-radius:3px;padding:6px 12px;cursor:pointer;font-weight:600}
+button:hover{background:var(--sky)}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+button.primary:hover{background:var(--brand-dark);border-color:var(--brand-dark);color:#fff}
+select,input[type=text],input[type=number],textarea{background:var(--card);border:2px solid var(--ink);border-radius:3px;padding:5px 8px}
+textarea{width:100%;min-height:64px;resize:vertical}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--brand);border-radius:3px;padding:16px}
+
+.wrap{max-width:1180px;margin:0 auto;padding:18px}
+h2{font:700 19px/1.2 var(--serif);margin:0 0 8px}
+.card{margin-bottom:16px}
+.note{background:var(--sky);border:2px solid var(--brand);border-left:10px solid var(--brand);border-radius:3px;padding:14px 16px;margin-bottom:16px}
+.note p{margin:5px 0}
+.warn{background:var(--gold-soft);color:var(--ink);border:2px solid var(--gold);border-left:10px solid var(--gold);border-radius:3px;padding:9px 12px;margin:10px 0;font-size:14px;font-weight:600}
+.files{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:720px){.files{grid-template-columns:1fr}}
+.drop{border:2px dashed var(--ink);border-radius:3px;padding:12px}
+.drop b{font:700 16px/1.3 var(--serif)}
+.drop.ok{border:2px solid var(--ok);border-left:10px solid var(--ok)}
+#overlap{font-weight:600;color:var(--ink)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;border-top:3px solid var(--rule);border-bottom:3px solid var(--rule)}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:800 11px/1.2 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);border-bottom:2px solid var(--rule);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even) td,table tr:nth-child(odd):not(:first-child) td{background:transparent}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+td:first-child{white-space:nowrap;font-weight:700}
+.a{color:var(--brand);font-weight:700} .b{color:var(--bad);font-weight:700}
+#sumTbl td:last-child{font-weight:700}
+</style>
+</head>
+<body>
+<header><h1>Compare Coders</h1><span class="spacer"></span><a href="index.html"><button>← Back to coding</button></a></header>
+<div class="wrap">
+
+  <div class="note">
+    <p><b>You need both coders' results files to use this page</b>, plus the study settings file. If you've used the coding page in this browser, the settings load automatically.</p>
+    <p>Each coder clicks <b>Export codes</b> on the <a href="index.html">coding page</a>, which downloads a file named like <code>ad-codes_Name_date.csv</code>. Upload one coder's file in each box below. Once both are uploaded, the comparison appears automatically.</p>
+    <p><b>Your files are never uploaded.</b> This page reads them inside your browser only. It can't save anything to GitHub or any server, and it forgets the files when you close or refresh the tab. Keep your results files on your own computer and don't add them to the repo.</p>
+  </div>
+
+  <div class="card">
+    <div class="drop" id="dropCfg" style="margin-bottom:14px"><b>Study settings</b><br><input type="file" accept=".json,.txt,application/json" id="fileCfg"><div class="mute" id="infoCfg">Looking for saved settings…</div></div>
+    <div class="files">
+      <div class="drop" id="dropA"><b>Coder A results</b><br><input type="file" accept=".csv" id="fileA"><div class="mute" id="infoA">No file yet.</div></div>
+      <div class="drop" id="dropB"><b>Coder B results</b><br><input type="file" accept=".csv" id="fileB"><div class="mute" id="infoB">No file yet.</div></div>
+    </div>
+    <div id="msgs"></div>
+    <p class="mute" id="waiting" style="margin-bottom:0">Waiting for the settings and both results files…</p>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="card">
+      <div class="row" style="margin-top:0">
+        <h2 style="margin:0">Agreement by dimension</h2>
+        <span style="flex:1"></span>
+        <label class="mute">Ads: <select id="scopeSel"><option value="all">All ads</option><option value="exclude">Exclude pilot set</option><option value="only">Pilot set only</option></select></label>
+      </div>
+      <p class="mute" id="overlap"></p><div id="pilotWarn"></div>
+      <div class="tbl"><table id="sumTbl"></table></div>
+      <p class="mute">
+        <b>% agree</b>: share of ads where both picked the same option.
+        <b>Cohen's κ</b>: agreement corrected for chance (Cohen 1960).
+        <b>Weighted κ</b>: quadratic-weighted, for ordered scales only. Near-misses (e.g. 3 vs 4) count as partial agreement. Uses only ordered answers, so "Can't tell" etc. are left out; see its n.
+        <b>Rating</b>: Landis &amp; Koch (1977): &lt;0 poor, 0–.20 slight, .21–.40 fair, .41–.60 moderate, .61–.80 substantial, .81–1 almost perfect.
+        "—" = κ can't be computed (e.g. both coders used one option for every ad).
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-top:0">
+        <h2 style="margin:0">Disagreements</h2>
+        <select id="dimSel"></select>
+        <span style="flex:1"></span>
+        <button id="dlDis">Download disagreements CSV</button>
+      </div>
+      <div class="tbl"><table id="disTbl"></table></div>
+    </div>
+
+    <div class="card">
+      <h2>Concerns raised by either coder</h2>
+      <p class="mute">Ads where a coder marked "Wrong video" or "Unsure", or wrote a concern note. Includes ads only one coder coded.</p>
+      <div class="tbl"><table id="conTbl"></table></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+/* ---------- study settings file (private; loaded by the coder, never stored in the repo) ---------- */
+function parseLoose(text){
+  // Allows // and /* */ notes and a trailing comma before ] or }, then reads it as JSON.
+  let out="", i=0, inStr=false;
+  text=text.replace(/^﻿/,"");
+  while(i<text.length){ const c=text[i], n=text[i+1];
+    if(inStr){ out+=c; if(c==="\\"){ out+=n||""; i+=2; continue; } if(c==='"') inStr=false; i++; continue; }
+    if(c==='"'){ inStr=true; out+=c; i++; continue; }
+    if(c==="/"&&n==="/"){ while(i<text.length&&text[i]!=="\n") { out+=" "; i++; } continue; }
+    if(c==="/"&&n==="*"){ out+="  "; i+=2; while(i<text.length&&!(text[i]==="*"&&text[i+1]==="/")){ out+=text[i]==="\n"?"\n":" "; i++; } out+="  "; i+=2; continue; }
+    out+=c; i++; }
+  out=out.replace(/,(\s*[\]}])/g," $1");
+  try { return JSON.parse(out); }
+  catch(e){ const m=String(e.message).match(/position (\d+)/); let where="";
+    if(m){ const line=out.slice(0,+m[1]).split("\n").length; where=` near line ${line}`; }
+    throw new Error(`The settings file has a typo${where}. Check for a missing comma, quote or bracket.`); }
+}
+function validateConfig(c){
+  const errs=[];
+  if(!c||typeof c!=="object") return ["The settings file is empty."];
+  if(!Array.isArray(c.dimensions)||!c.dimensions.length) errs.push('"dimensions" must be a list with at least one dimension.');
+  const keys=new Set();
+  (c.dimensions||[]).forEach((d,n)=>{ const at=`Dimension ${n+1}${d&&d.label?` ("${d.label}")`:""}`;
+    if(!d||!d.key||!/^[A-Za-z0-9_]+$/.test(d.key)) errs.push(`${at}: "key" is missing or has spaces/symbols.`);
+    else if(keys.has(d.key)) errs.push(`${at}: key "${d.key}" is used twice.`); else keys.add(d.key);
+    if(!d||!d.label) errs.push(`${at}: "label" is missing.`);
+    if(!d||!Array.isArray(d.options)||d.options.length<2) errs.push(`${at}: needs at least 2 "options".`);
+    if(d&&d.ordinal&&(!Array.isArray(d.ordinal)||d.ordinal.some(o=>!(d.options||[]).includes(o)))) errs.push(`${at}: every "ordinal" value must also be in "options".`);
+  });
+  const v=c.video_check;
+  if(v&&(!v.key||!Array.isArray(v.options))) errs.push('"video_check" needs a "key" and "options".');
+  if(v&&keys.has(v.key)) errs.push(`"video_check" key "${v.key}" is also used by a dimension.`);
+  return errs;
+}
+function normalizeConfig(c){
+  return { study_name: c.study_name||"Ad Coder", version: c.version==null?"":String(c.version),
+    dimensions: c.dimensions.map(d=>({...d, options:d.options.map(String), ordinal:d.ordinal?d.ordinal.map(String):undefined})),
+    video_check: c.video_check ? {...c.video_check, options:c.video_check.options.map(String)} : null,
+    pilot: Object.assign({size:20,seed:1,excludeFlagged:true,ids:[]}, c.pilot||{}) };
+}
+function loadConfigText(text){ const c=parseLoose(text), e=validateConfig(c); if(e.length) throw new Error(e.join(" ")); return normalizeConfig(c); }
+
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const csvCell = v => { v=v==null?"":String(v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v };
+function parseCSV(text){
+  const rows=[];let row=[],f="",q=false;
+  text=text.replace(/^﻿/,"");
+  for(let k=0;k<text.length;k++){const c=text[k];
+    if(q){ if(c=='"'){ if(text[k+1]=='"'){f+='"';k++} else q=false } else f+=c }
+    else if(c=='"') q=true;
+    else if(c==','){row.push(f);f=""}
+    else if(c=='\n'||c=='\r'){ if(c=='\r'&&text[k+1]=='\n')k++; row.push(f);f=""; if(row.some(x=>x!==""))rows.push(row); row=[] }
+    else f+=c;
+  }
+  row.push(f); if(row.some(x=>x!==""))rows.push(row);
+  const head=(rows.shift()||[]).map(h=>h.trim().toLowerCase());
+  return {head, rows: rows.map(r=>Object.fromEntries(head.map((h,j)=>[h,(r[j]||"").trim()])))};
+}
+
+let CFG=null, DIMENSIONS=[], VIDEO_CHECK=null, DIMS=[];
+function setCfg(cfg, where){
+  CFG=cfg; DIMENSIONS=cfg.dimensions; VIDEO_CHECK=cfg.video_check; DIMS=[...DIMENSIONS, ...(VIDEO_CHECK?[VIDEO_CHECK]:[])];
+  $("dropCfg").classList.add("ok");
+  $("infoCfg").textContent=`${cfg.study_name}${cfg.version?" · version "+cfg.version:""} · ${DIMENSIONS.length} dimensions · ${where}`;
+  update();
+}
+function cfgError(err){ $("dropCfg").classList.remove("ok"); $("infoCfg").innerHTML=`<span style="color:var(--bad)">${esc(err.message)}</span>`; }
+$("fileCfg").onchange=e=>{ const f=e.target.files[0]; if(f) f.text().then(t=>{ try{ setCfg(loadConfigText(t),f.name); }catch(err){ cfgError(err); } }); };
+
+const F = {A:null, B:null};
+
+function load(side, file){
+  file.text().then(t=>{
+    const {head, rows} = parseCSV(t);
+    const box=$("drop"+side), info=$("info"+side);
+    if(!head.includes("ad_id") || !head.includes("coder")){
+      F[side]=null; box.classList.remove("ok");
+      info.innerHTML=`<span style="color:var(--bad)">This doesn't look like an exported results file (no ad_id or dimension columns). Use the file from <b>Export codes</b>, not ads.csv.</span>`;
+      update(); return;
+    }
+    const name=(rows.find(r=>r.coder)||{}).coder || file.name;
+    const map={}; rows.forEach(r=>map[r.ad_id]=r);
+    F[side]={name, map, file:file.name, head};
+    box.classList.add("ok");
+    info.textContent=`${name} · ${rows.length} ads · ${file.name}`;
+    update();
+  });
+}
+$("fileA").onchange=e=>e.target.files[0]&&load("A",e.target.files[0]);
+$("fileB").onchange=e=>e.target.files[0]&&load("B",e.target.files[0]);
+
+/* ---------- stats ---------- */
+function kappa(pairs){
+  const n=pairs.length; if(!n) return null;
+  const cats=[...new Set(pairs.flat())], ca={}, cb={};
+  let agree=0; pairs.forEach(([a,b])=>{ if(a===b) agree++; ca[a]=(ca[a]||0)+1; cb[b]=(cb[b]||0)+1; });
+  const po=agree/n, pe=cats.reduce((s,c)=>s+((ca[c]||0)/n)*((cb[c]||0)/n),0);
+  return {po, k: pe>=1 ? null : (po-pe)/(1-pe), n};
+}
+function weightedKappa(pairs, order){
+  const p=pairs.filter(([a,b])=>order.includes(a)&&order.includes(b)); const n=p.length, K=order.length;
+  if(!n||K<2) return null;
+  const idx=v=>order.indexOf(v), w=(i,j)=>1-((i-j)**2)/((K-1)**2);
+  const ra=Array(K).fill(0), rb=Array(K).fill(0); let po=0;
+  p.forEach(([a,b])=>{ const i=idx(a), j=idx(b); po+=w(i,j); ra[i]++; rb[j]++; });
+  po/=n; let pe=0; for(let i=0;i<K;i++) for(let j=0;j<K;j++) pe+=(ra[i]/n)*(rb[j]/n)*w(i,j);
+  return {k: pe>=1 ? null : (po-pe)/(1-pe), n};
+}
+const rating = k0 => { const k=k0==null?null:Math.round(k0*100)/100; return k==null?"—":k<0?"Poor":k<=.2?"Slight":k<=.4?"Fair":k<=.6?"Moderate":k<=.8?"Substantial":"Almost perfect"; };
+const fmt = k => k==null?"—":k.toFixed(2);
+const pct = x => x==null?"—":(x*100).toFixed(0)+"%";
+
+/* ---------- compare ---------- */
+let DIS=[];
+function update(){
+  const ready=CFG&&F.A&&F.B;
+  $("waiting").classList.toggle("hidden",ready);
+  $("results").classList.toggle("hidden",!ready);
+  const m=[];
+  if(ready && F.A.name===F.B.name) m.push(`Both files say the coder is "${esc(F.A.name)}". Make sure you uploaded two different coders' files.`);
+  if(ready){
+    [F.A,F.B].forEach(f=>{ if(!DIMENSIONS.some(d=>f.head.includes(d.key))) m.push(`${esc(f.name)}'s file has none of the dimensions in these settings. Check you loaded the right settings file.`); });
+    const ver=f=>{ const v=new Set(Object.values(f.map).map(r=>r.settings_version).filter(Boolean)); return [...v].join("/"); };
+    const va=ver(F.A), vb=ver(F.B);
+    if(va!==vb) m.push(`The files were exported with different settings versions (${esc(F.A.name)}: ${esc(va||"none")}, ${esc(F.B.name)}: ${esc(vb||"none")}). Make sure you both have the latest settings file and re-export.`);
+    else if(CFG.version&&va&&va!==CFG.version) m.push(`Both files used settings version ${esc(va)}, but the settings loaded here are version ${esc(CFG.version)}.`);
+    const missing=DIMENSIONS.filter(d=>!F.A.head.includes(d.key)||!F.B.head.includes(d.key)).map(d=>d.label);
+    if(missing.length) m.push(`Not in both files: ${esc(missing.join(", "))}. These rows will show no data. One file may be from an older version of the tool.`);
+  }
+  $("msgs").innerHTML=m.map(x=>`<div class="warn">${x}</div>`).join("");
+  if(ready) compare();
+}
+$("scopeSel").onchange=compare;
+function compare(){
+  const scope=$("scopeSel").value;
+  const isPilot=id=>[F.A.map[id],F.B.map[id]].some(r=>r&&r.in_pilot_set==="yes");
+  const inScope=id=>scope==="all"||(scope==="only"?isPilot(id):!isPilot(id));
+  const both=Object.keys(F.A.map).filter(id=>F.B.map[id]&&inScope(id)).sort();
+  const onlyA=Object.keys(F.A.map).filter(id=>!F.B.map[id]&&inScope(id)).length, onlyB=Object.keys(F.B.map).filter(id=>!F.A.map[id]&&inScope(id)).length;
+  const label={all:"",exclude:" (pilot set excluded)",only:" (pilot set only)"}[scope];
+  $("overlap").textContent=`${both.length} ads coded by both${label}. ${onlyA} only by ${F.A.name}, ${onlyB} only by ${F.B.name} (left out).`;
+  const seeds=new Set([...Object.values(F.A.map),...Object.values(F.B.map)].map(r=>r.pilot_size_seed).filter(Boolean));
+  $("pilotWarn").innerHTML=scope!=="all"&&seeds.size>1?`<div class="warn">The two files used different pilot settings (${esc([...seeds].join(" vs "))}, size/seed). Pilot ads were taken from either file, but check you both used the same size and seed.</div>`:"";
+
+  DIS=[];
+  const rows=DIMS.map(d=>{
+    const pairs=[];
+    both.forEach(id=>{ const a=F.A.map[id][d.key], b=F.B.map[id][d.key]; if(a&&b){ pairs.push([a,b]); if(a!==b) DIS.push({id,dim:d,a,b}); } });
+    const k=kappa(pairs), wk=d.ordinal?weightedKappa(pairs,d.ordinal):null;
+    return `<tr><td>${esc(d.label)}${d===VIDEO_CHECK?' <span class="mute">(optional)</span>':""}</td>
+      <td class="num">${k?k.n:0}</td><td class="num">${pct(k&&k.po)}</td><td class="num">${fmt(k&&k.k)}</td>
+      <td class="num">${d.ordinal?(wk?`${fmt(wk.k)} <span class="mute">(n=${wk.n})</span>`:"—"):'<span class="mute">n/a</span>'}</td>
+      <td>${rating(d.ordinal&&wk?wk.k:k&&k.k)}</td></tr>`;
+  });
+  $("sumTbl").innerHTML=`<tr><th>Dimension</th><th>Ads both coded</th><th>% agree</th><th>Cohen's κ</th><th>Weighted κ</th><th>Rating</th></tr>`+rows.join("");
+
+  const cur=$("dimSel").value;
+  $("dimSel").innerHTML=`<option value="">All dimensions (${DIS.length})</option>`+DIMS.map(d=>`<option value="${d.key}">${esc(d.label)} (${DIS.filter(x=>x.dim===d).length})</option>`).join("");
+  $("dimSel").value=cur; renderDis();
+
+  const any=[...new Set([...Object.keys(F.A.map),...Object.keys(F.B.map)])].sort();
+  const con=any.filter(id=>[F.A.map[id],F.B.map[id]].some(r=>r&&(/wrong|unsure/i.test(r.video_check||"")||r.concern_notes)));
+  const cell=r=>!r?'<span class="mute">not coded</span>':[r.video_check&&`<b>${esc(r.video_check)}</b>`,esc(r.concern_notes||"")].filter(Boolean).join("<br>")||'<span class="mute">—</span>';
+  $("conTbl").innerHTML=con.length?`<tr><th>Ad</th><th>Title</th><th>Flags in ad list</th><th class="a">${esc(F.A.name)}</th><th class="b">${esc(F.B.name)}</th></tr>`+
+    con.map(id=>{const a=F.A.map[id]||{}, b=F.B.map[id]||{}; return `<tr><td>${esc(id)}</td><td>${esc(a.title||b.title)}</td><td class="mute">${esc(a.concern_tags||b.concern_tags||"")}</td><td>${cell(F.A.map[id])}</td><td>${cell(F.B.map[id])}</td></tr>`}).join("")
+    :`<tr><td class="mute">No concerns raised.</td></tr>`;
+}
+function renderDis(){
+  const k=$("dimSel").value, list=DIS.filter(x=>!k||x.dim.key===k);
+  $("disTbl").innerHTML=list.length?`<tr><th>Ad</th><th>Title</th><th>Dimension</th><th class="a">${esc(F.A.name)}</th><th class="b">${esc(F.B.name)}</th><th>Notes</th></tr>`+
+    list.map(x=>{const a=F.A.map[x.id], b=F.B.map[x.id]; const notes=[a.notes&&`${esc(F.A.name)}: ${esc(a.notes)}`,b.notes&&`${esc(F.B.name)}: ${esc(b.notes)}`].filter(Boolean).join("<br>");
+      return `<tr><td>${esc(x.id)}</td><td>${esc(a.title||b.title)}</td><td>${esc(x.dim.label)}</td><td class="a">${esc(x.a)}</td><td class="b">${esc(x.b)}</td><td class="mute">${notes}</td></tr>`}).join("")
+    :`<tr><td class="mute">No disagreements.</td></tr>`;
+}
+$("dimSel").onchange=renderDis;
+$("dlDis").onclick=()=>{
+  const cols=["ad_id","title","dimension",`coder_a (${F.A.name})`,`coder_b (${F.B.name})`,"notes_a","notes_b"];
+  const lines=[cols.map(csvCell).join(",")].concat(DIS.map(x=>{const a=F.A.map[x.id], b=F.B.map[x.id];
+    return [x.id,a.title||b.title,x.dim.key,x.a,x.b,a.notes,b.notes].map(csvCell).join(",")}));
+  const blob=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv"}), el=document.createElement("a");
+  el.href=URL.createObjectURL(blob); el.download=`disagreements_${F.A.name}_vs_${F.B.name}.csv`.replace(/[^\w.-]+/g,"_"); el.click();
+};
+
+/* load settings saved by the coding page in this browser */
+(function(){ let t=null; try{ t=JSON.parse(localStorage.getItem("adcoder.config")); }catch(e){}
+  if(!t){ $("infoCfg").textContent="No saved settings in this browser. Choose the settings file."; return; }
+  try{ setCfg(loadConfigText(t),"saved from the coding page"); }catch(err){ cfgError(err); } })();
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Private research files: never commit these
+study_config.json
+ads.csv
+ad-codes_*.csv
+disagreements_*.csv
+ad-coder-backup_*.json
+samples/
+screens/
