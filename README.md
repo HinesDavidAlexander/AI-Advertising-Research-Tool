@@ -14,7 +14,7 @@ This repo holds **only the tool**. The study's private files are shared directly
 
 - **`index.html`** (coding): on first visit, choose the settings file and the ad list. Both are remembered in that browser.
 - **`compare.html`**: upload two coders' exported results. The settings load automatically if you've used the coding page in the same browser.
-- **`ads-manager.html`** (ad list): add or fix ads and download an updated `ads.csv`. New ads get the next ID for their company automatically (e.g. `ANT-008`), and IDs can never be changed or reused.
+- **`ads-manager.html`** (Add Ads to Dataset): add or fix ads and download an updated `ads.csv`. New ads get the next ID for their company automatically (e.g. `ANT-008`), and IDs can never be changed or reused.
 
 ## Updating settings or the ad list
 
